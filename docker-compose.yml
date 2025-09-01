@@ -1,0 +1,58 @@
+services:
+  db:
+    container_name: db
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=kluest 
+      - POSTGRES_DB=mydb
+    ports:
+      - "5000:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - my-network
+
+  patient-service:
+    container_name: patient-service
+    build:
+      context: ./patient-service       # Folder where your Dockerfile is
+      dockerfile: Dockerfile            # Optional if your file is named "Dockerfile"
+    image: patient-service:latest
+    ports:
+      - "4000:4000"
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=kluest
+      - POSTGRES_DB=mydb
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/mydb
+      - SPRING_DATASOURCE_USERNAME=kluest
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_SQL_INIT_ALWAYS=always
+    depends_on:
+      - db
+    networks:
+      - my-network
+
+  billing-service:
+    container_name: billing-service
+    build:
+      context: ./billing-service        # Folder where your Dockerfile is
+      dockerfile: Dockerfile            # Optional if your file is named "Dockerfile"
+    image: billing-service:latest
+    ports:
+      - "4001:4001"
+      - "9001:9001"
+    networks:
+      - my-network
+
+
+volumes:
+  db_data:
+
+networks:
+  my-network:
+    driver: bridge
+
+
